@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Online XOX - Real-time Multiplayer Tic Tac Toe
 
 A modern, real-time multiplayer Tic Tac Toe game built with Next.js, TypeScript, Tailwind CSS, and Socket.IO.
