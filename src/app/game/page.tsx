@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { io, Socket } from 'socket.io-client'
 import GameBoard from '@/components/GameBoard'
@@ -27,7 +27,7 @@ interface GameState {
   winningLine: number[] | null
 }
 
-export default function GamePage() {
+function GameContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -311,5 +311,17 @@ export default function GamePage() {
         />
       )}
     </div>
+  )
+}
+
+export default function GamePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    }>
+      <GameContent />
+    </Suspense>
   )
 }
