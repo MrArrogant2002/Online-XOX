@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play Tic-Tac-Toe online with beautiful animations and smooth gameplay">
+    <title>Online XOX - Tic Tac Toe Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">
+                <span class="x-letter">X</span>
+                <span class="o-letter">O</span>
+                <span class="x-letter">X</span>
+                <span class="game-text">Game</span>
+            </h1>
+            <div class="score-board">
+                <div class="score-item">
+                    <span class="player-name">Player X</span>
+                    <span class="score" id="scoreX">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="player-name">Player O</span>
+                    <span class="score" id="scoreO">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="player-name">Draws</span>
+                    <span class="score" id="scoreDraw">0</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="game-container">
+            <div class="game-status">
+                <div class="current-player">
+                    <span id="currentPlayerText">Player X's Turn</span>
+                    <div class="turn-indicator" id="turnIndicator"></div>
+                </div>
+            </div>
+
+            <div class="game-board" id="gameBoard">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+
+            <div class="game-controls">
+                <button class="btn btn-primary" id="resetBtn">
+                    <span class="btn-text">New Game</span>
+                </button>
+                <button class="btn btn-secondary" id="resetScoreBtn">
+                    <span class="btn-text">Reset Score</span>
+                </button>
+            </div>
+        </main>
+
+        <div class="game-overlay" id="gameOverlay">
+            <div class="modal">
+                <div class="modal-content">
+                    <h2 id="gameResult"></h2>
+                    <p id="gameMessage"></p>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" id="playAgainBtn">Play Again</button>
+                        <button class="btn btn-secondary" id="closeModalBtn">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="winning-line" id="winningLine"></div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 Online XOX Game. Built with ❤️ for fun!</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
