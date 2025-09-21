@@ -39,9 +39,9 @@ export default function GamePage() {
   const [connectionStatus, setConnectionStatus] = useState('connecting')
   const [showModal, setShowModal] = useState(false)
 
-  const roomCode = searchParams.get('room')
-  const playerName = searchParams.get('name')
-  const isCreator = searchParams.get('create') === 'true'
+  const roomCode = searchParams?.get('room')
+  const playerName = searchParams?.get('name')
+  const isCreator = searchParams?.get('create') === 'true'
 
   useEffect(() => {
     if (!roomCode || !playerName) {
@@ -50,15 +50,12 @@ export default function GamePage() {
     }
 
     // Initialize Socket.IO connection
-    const newSocket = io(process.env.NODE_ENV === 'production' 
-      ? process.env.NEXT_PUBLIC_SERVER_URL || window.location.origin 
-      : window.location.origin,
-      {
-        transports: ['websocket', 'polling'],
-        upgrade: true,
-        rememberUpgrade: true
-      }
-    )
+    const newSocket = io({
+      path: '/api/socket',
+      transports: ['websocket', 'polling'],
+      upgrade: true,
+      rememberUpgrade: true
+    })
 
     setSocket(newSocket)
 
