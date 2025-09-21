@@ -217,13 +217,15 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseServerIO) => {
     console.log('Socket is initializing')
     const io = new ServerIO(res.socket.server, {
       path: '/api/socket',
+      transports: ['polling'], // Only use polling on Vercel
       cors: {
         origin: process.env.NODE_ENV === 'production' 
-          ? process.env.CORS_ORIGIN 
+          ? ["https://*.vercel.app", "https://online-xox.vercel.app"]
           : ["http://localhost:3001", "http://10.177.184.147:3001"],
         methods: ["GET", "POST"],
         credentials: true
-      }
+      },
+      allowEIO3: true
     })
     res.socket.server.io = io
 

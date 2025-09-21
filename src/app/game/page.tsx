@@ -52,9 +52,12 @@ function GameContent() {
     // Initialize Socket.IO connection
     const newSocket = io({
       path: '/api/socket',
-      transports: ['websocket', 'polling'],
-      upgrade: true,
-      rememberUpgrade: true
+      transports: ['polling'], // Use only polling for Vercel compatibility
+      upgrade: false,
+      rememberUpgrade: false,
+      timeout: 20000,
+      forceNew: true,
+      autoConnect: true
     })
 
     setSocket(newSocket)
