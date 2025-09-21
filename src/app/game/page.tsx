@@ -49,40 +49,104 @@ function GameContent() {
       return
     }
 
-    // Initialize Socket.IO connection
+    // Initialize optimized Socket.IO connection for Vercel
     const newSocket = io({
       path: '/api/socket',
-      transports: ['polling'], // Use only polling for Vercel compatibility
-      upgrade: false,
+      addTrailingSlash: false,
+      transports: ['polling'], // Polling only for Vercel serverless
+      upgrade: false, // Never try to upgrade to WebSocket
       rememberUpgrade: false,
-      timeout: 20000,
       forceNew: true,
-      autoConnect: true
+      autoConnect: true,
+      timeout: 20000, // 20 seconds timeout
+      
+      // Enhanced error handling
+      reconnection: true, // Enable auto-reconnection
+      reconnectionAttempts: 5, // Try 5 times to reconnect
+      reconnectionDelay: 1000, // Start with 1 second delay
+      reconnectionDelayMax: 5000, // Max 5 seconds between attempts
+      randomizationFactor: 0.5, // Randomize reconnection timing
+      
+      // Vercel-specific optimizations
+      closeOnBeforeunload: true, // Clean disconnect on page close
+      
+      // Additional query parameters for better serverless compatibility
+      query: {
+        v: Date.now(), // Cache busting
+        transport: 'polling'
+      }
     })
 
     setSocket(newSocket)
 
-    // Connection events
+    // Enhanced connection events
     newSocket.on('connect', () => {
-      console.log('Connected to server')
+      console.log('✅ Connected to server successfully')
       setConnectionStatus('connected')
+      setError('') // Clear any previous errors
       
       if (isCreator) {
+        console.log('Creating game...')
         newSocket.emit('create-game', { roomCode, playerName })
       } else {
+        console.log('Joining game...')
         newSocket.emit('join-game', { roomCode, playerName })
       }
     })
 
-    newSocket.on('disconnect', () => {
-      console.log('Disconnected from server')
-      setConnectionStatus('disconnected')
+    // Connection acknowledgment (new event from optimized server)
+    newSocket.on('connection-ack', (data) => {
+      console.log('Server acknowledgment:', data)
+      setConnectionStatus('connected')
     })
 
+    newSocket.on('disconnect', (reason) => {
+      console.log(`❌ Disconnected from server. Reason: ${reason}`)
+      setConnectionStatus('disconnected')
+      
+      // Handle different disconnect reasons
+      if (reason === 'transport close' || reason === 'transport error') {
+        setError('Connection lost. Attempting to reconnect...')
+      }
+    })
+
+    // Enhanced error handling
     newSocket.on('connect_error', (error) => {
-      console.error('Connection error:', error)
+      console.error('❌ Connection error:', error)
       setConnectionStatus('error')
-      setError('Failed to connect to game server')
+      
+      // More specific error messages
+      if (error.message.includes('server error')) {
+        setError('Server is temporarily unavailable. Retrying...')
+      } else if (error.message.includes('timeout')) {
+        setError('Connection timeout. Please check your internet connection.')
+      } else {
+        setError('Failed to connect to game server. Please try again.')
+      }
+    })
+
+    // Reconnection events
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log(`✅ Reconnected after ${attemptNumber} attempts`)
+      setConnectionStatus('connected')
+      setError('')
+    })
+
+    newSocket.on('reconnect_attempt', (attemptNumber) => {
+      console.log(`🔄 Reconnection attempt ${attemptNumber}`)
+      setConnectionStatus('reconnecting')
+      setError(`Reconnecting... (attempt ${attemptNumber}/5)`)
+    })
+
+    newSocket.on('reconnect_error', (error) => {
+      console.error('❌ Reconnection failed:', error)
+      setError('Reconnection failed. Please refresh the page.')
+    })
+
+    newSocket.on('reconnect_failed', () => {
+      console.error('❌ All reconnection attempts failed')
+      setConnectionStatus('error')
+      setError('Unable to reconnect. Please refresh the page.')
     })
 
     // Game events
