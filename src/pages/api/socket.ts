@@ -211,111 +211,88 @@ export interface NextApiResponseServerIO extends NextApiResponse {
 }
 
 const SocketHandler = (req: NextApiRequest, res: NextApiResponseServerIO) => {
-  if (res.socket.server.io) {
-    console.log('Socket is already running')
-  } else {
-    console.log('Socket is initializing')
-    const io = new ServerIO(res.socket.server, {
-      path: '/api/socket',
-      transports: ['polling'], // Only use polling on Vercel
-      cors: {
-        origin: process.env.NODE_ENV === 'production' 
-          ? ["https://*.vercel.app", "https://online-xox.vercel.app"]
-          : ["http://localhost:3001", "http://10.177.184.147:3001"],
-        methods: ["GET", "POST"],
-        credentials: true
-      },
-      allowEIO3: true
-    })
-    res.socket.server.io = io
-
-    io.on('connection', (socket) => {
-      console.log('User connected:', socket.id)
-
-      // Create game event
-      socket.on('create-game', ({ roomCode, playerName }) => {
-        try {
-          const game = gameManager.createGame(roomCode, playerName, socket.id)
-          socket.join(roomCode)
-          
-          socket.emit('game-created', {
-            success: true,
-            game: {
-              roomCode: game.roomCode,
-              players: game.players,
-              board: game.board,
-              currentPlayer: game.currentPlayer,
-              gameStatus: game.gameStatus,
-              playerSymbol: 'X'
-            }
-          })
-          
-          console.log(`Game created: ${roomCode} by ${playerName}`)
-        } catch (error: any) {
-          socket.emit('game-error', { message: error?.message || 'Unknown error' })
-        }
+  try {
+    if (!res.socket.server.io) {
+      console.log('Socket is initializing')
+      const io = new ServerIO(res.socket.server, {
+        path: '/api/socket',
+        transports: ['polling'], // Only use polling on Vercel
+        cors: {
+          origin: process.env.NODE_ENV === 'production' 
+            ? ["https://*.vercel.app", "https://online-xox.vercel.app"]
+            : ["http://localhost:3001", "http://10.177.184.147:3001"],
+          methods: ["GET", "POST"],
+          credentials: true
+        },
+        allowEIO3: true
       })
+      res.socket.server.io = io
 
-      // Join game event
-      socket.on('join-game', ({ roomCode, playerName }) => {
-        try {
-          const game = gameManager.joinGame(roomCode, playerName, socket.id)
-          socket.join(roomCode)
-          
-          // Notify both players
-          io.to(roomCode).emit('game-joined', {
-            success: true,
-            game: {
-              roomCode: game.roomCode,
-              players: game.players,
-              board: game.board,
-              currentPlayer: game.currentPlayer,
-              gameStatus: game.gameStatus
-            }
-          })
-          
-          // Send player-specific data
-          socket.emit('player-assigned', { playerSymbol: 'O' })
-          socket.to(roomCode).emit('player-assigned', { playerSymbol: 'X' })
-          
-          console.log(`${playerName} joined game: ${roomCode}`)
-        } catch (error: any) {
-          socket.emit('game-error', { message: error?.message || 'Unknown error' })
-        }
-      })
+      io.on('connection', (socket) => {
+        console.log('User connected:', socket.id)
 
-      // Make move event
-      socket.on('make-move', ({ position }) => {
-        try {
-          const game = gameManager.makeMove(socket.id, position)
-          const roomCode = gameManager.playerRooms.get(socket.id)
-          
-          if (roomCode) {
-            // Broadcast updated game state to all players in the room
-            io.to(roomCode).emit('game-updated', {
-              board: game.board,
-              currentPlayer: game.currentPlayer,
-              gameStatus: game.gameStatus,
-              winner: game.winner,
-              winningLine: game.winningLine
+        // Create game event
+        socket.on('create-game', ({ roomCode, playerName }) => {
+          try {
+            const game = gameManager.createGame(roomCode, playerName, socket.id)
+            socket.join(roomCode)
+            
+            socket.emit('game-created', {
+              success: true,
+              game: {
+                roomCode: game.roomCode,
+                players: game.players,
+                board: game.board,
+                currentPlayer: game.currentPlayer,
+                gameStatus: game.gameStatus,
+                playerSymbol: 'X'
+              }
             })
             
-            console.log(`Move made in room ${roomCode}: position ${position}`)
+            console.log(`Game created: ${roomCode}`)
+          } catch (error) {
+            console.error('Error creating game:', error)
+            socket.emit('game-error', { message: (error as Error).message })
           }
-        } catch (error: any) {
-          socket.emit('game-error', { message: error?.message || 'Unknown error' })
-        }
-      })
+        })
 
-      // Reset game event
-      socket.on('reset-game', () => {
-        try {
-          const roomCode = gameManager.playerRooms.get(socket.id)
-          if (roomCode) {
-            const game = gameManager.resetGame(roomCode)
+        // Join game event
+        socket.on('join-game', ({ roomCode, playerName }) => {
+          try {
+            const game = gameManager.joinGame(roomCode, playerName, socket.id)
+            socket.join(roomCode)
             
-            if (game) {
-              io.to(roomCode).emit('game-reset', {
+            // Notify both players
+            io.to(roomCode).emit('game-joined', {
+              success: true,
+              game: {
+                roomCode: game.roomCode,
+                players: game.players,
+                board: game.board,
+                currentPlayer: game.currentPlayer,
+                gameStatus: game.gameStatus
+              }
+            })
+            
+            // Send player-specific data
+            socket.emit('player-assigned', { playerSymbol: 'O' })
+            socket.to(roomCode).emit('player-assigned', { playerSymbol: 'X' })
+            
+            console.log(`Player joined game: ${roomCode}`)
+          } catch (error) {
+            socket.emit('game-error', { message: (error as Error).message })
+          }
+        })
+
+        // Make move event
+        socket.on('make-move', ({ position }) => {
+          try {
+            const game = gameManager.makeMove(socket.id, position)
+            const roomCode = gameManager.playerRooms.get(socket.id)
+            
+            if (roomCode) {
+              // Broadcast updated game state to all players in the room
+              io.to(roomCode).emit('game-updated', {
                 board: game.board,
                 currentPlayer: game.currentPlayer,
                 gameStatus: game.gameStatus,
@@ -323,54 +300,83 @@ const SocketHandler = (req: NextApiRequest, res: NextApiResponseServerIO) => {
                 winningLine: game.winningLine
               })
               
-              console.log(`Game reset in room: ${roomCode}`)
+              console.log(`Move made in room ${roomCode}: position ${position}`)
             }
+          } catch (error) {
+            socket.emit('game-error', { message: (error as Error).message })
           }
-        } catch (error: any) {
-          socket.emit('game-error', { message: error?.message || 'Unknown error' })
-        }
-      })
+        })
 
-      // Handle disconnection
-      socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id)
-        
-        const result = gameManager.handleDisconnection(socket.id)
-        if (result) {
-          const { roomCode, game } = result
-          // Notify remaining player about disconnection
-          socket.to(roomCode).emit('player-disconnected', {
-            game: {
-              players: game.players,
-              gameStatus: game.gameStatus
+        // Reset game event
+        socket.on('reset-game', () => {
+          try {
+            const roomCode = gameManager.playerRooms.get(socket.id)
+            if (roomCode) {
+              const game = gameManager.resetGame(roomCode)
+              
+              if (game) {
+                io.to(roomCode).emit('game-reset', {
+                  board: game.board,
+                  currentPlayer: game.currentPlayer,
+                  gameStatus: game.gameStatus,
+                  winner: game.winner,
+                  winningLine: game.winningLine
+                })
+                
+                console.log(`Game reset in room: ${roomCode}`)
+              }
             }
-          })
-        }
-      })
+          } catch (error) {
+            socket.emit('game-error', { message: (error as Error).message })
+          }
+        })
 
-      // Get game state event (for reconnections)
-      socket.on('get-game-state', ({ roomCode }) => {
-        const game = gameManager.getGame(roomCode)
-        if (game) {
-          socket.emit('game-state', {
-            success: true,
-            game: {
-              roomCode: game.roomCode,
-              players: game.players,
-              board: game.board,
-              currentPlayer: game.currentPlayer,
-              gameStatus: game.gameStatus,
-              winner: game.winner,
-              winningLine: game.winningLine
-            }
-          })
-        } else {
-          socket.emit('game-error', { message: 'Game not found' })
-        }
+        // Handle disconnection
+        socket.on('disconnect', () => {
+          console.log('User disconnected:', socket.id)
+          
+          const result = gameManager.handleDisconnection(socket.id)
+          if (result) {
+            const { roomCode, game } = result
+            // Notify remaining player about disconnection
+            socket.to(roomCode).emit('player-disconnected', {
+              game: {
+                players: game.players,
+                gameStatus: game.gameStatus
+              }
+            })
+          }
+        })
+
+        // Get game state event (for reconnections)
+        socket.on('get-game-state', ({ roomCode }) => {
+          const game = gameManager.getGame(roomCode)
+          if (game) {
+            socket.emit('game-state', {
+              success: true,
+              game: {
+                roomCode: game.roomCode,
+                players: game.players,
+                board: game.board,
+                currentPlayer: game.currentPlayer,
+                gameStatus: game.gameStatus,
+                winner: game.winner,
+                winningLine: game.winningLine
+              }
+            })
+          } else {
+            socket.emit('game-error', { message: 'Game not found' })
+          }
+        })
       })
-    })
+    }
+    
+    console.log('Socket.IO handler ready')
+    res.status(200).json({ message: 'Socket.IO server running' })
+  } catch (error) {
+    console.error('Socket.IO initialization error:', error)
+    res.status(500).json({ error: 'Failed to initialize Socket.IO' })
   }
-  res.end()
 }
 
 export default SocketHandler
