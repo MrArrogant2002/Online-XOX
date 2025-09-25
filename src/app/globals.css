@@ -17,7 +17,9 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer utilities {
@@ -26,31 +28,133 @@ body {
   }
 }
 
-/* Custom animations for game elements */
+/* Enhanced animations for game elements */
 .cell-hover:hover {
-  @apply bg-gray-100 dark:bg-gray-800 transition-colors duration-200;
+  @apply bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 transition-all duration-300 transform scale-105;
+}
+
+.cell-hover:active {
+  @apply scale-95 transition-transform duration-100;
 }
 
 .game-board {
-  @apply grid grid-cols-3 gap-1 bg-gray-300 dark:bg-gray-700 p-1 rounded-lg;
+  @apply grid grid-cols-3 gap-2 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 p-3 rounded-2xl shadow-lg;
 }
 
 .cell {
-  @apply w-20 h-20 sm:w-24 sm:h-24 bg-white dark:bg-gray-900 flex items-center justify-center text-2xl sm:text-3xl font-bold cursor-pointer rounded transition-all duration-200;
+  @apply w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 bg-white dark:bg-gray-900 flex items-center justify-center text-2xl sm:text-3xl md:text-4xl font-bold cursor-pointer rounded-xl transition-all duration-300 hover:shadow-lg border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-600;
 }
 
 .cell:disabled {
-  @apply cursor-not-allowed;
+  @apply cursor-not-allowed opacity-75;
+}
+
+.cell:focus {
+  @apply outline-none ring-4 ring-blue-300 dark:ring-blue-600;
 }
 
 .player-x {
-  @apply text-blue-600;
+  @apply text-blue-600 dark:text-blue-400;
+  text-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .player-o {
-  @apply text-red-600;
+  @apply text-red-600 dark:text-red-400;
+  text-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
 .winning-cell {
-  @apply bg-green-200 dark:bg-green-800 animate-pulse-slow;
+  @apply bg-gradient-to-br from-green-200 to-green-300 dark:from-green-800 dark:to-green-700 animate-glow border-green-400 dark:border-green-500;
+  animation: glow 1s ease-in-out infinite alternate, scale-in 0.3s ease-out;
+}
+
+/* Custom button effects */
+.btn-primary {
+  @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-600;
+}
+
+.btn-secondary {
+  @apply bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-green-300 dark:focus:ring-green-600;
+}
+
+.btn-disabled {
+  @apply opacity-50 cursor-not-allowed transform-none hover:shadow-none;
+}
+
+/* Glass morphism effect */
+.glass {
+  @apply bg-white/10 dark:bg-gray-900/10 backdrop-blur-md border border-white/20 dark:border-gray-700/20;
+}
+
+/* Ripple effect for button clicks */
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.ripple-effect:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Floating particles animation */
+@keyframes float-particles {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(120deg); }
+  66% { transform: translateY(5px) rotate(240deg); }
+}
+
+.particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  border-radius: 50%;
+  animation: float-particles 6s ease-in-out infinite;
+  opacity: 0.3;
+}
+
+/* Improved mobile responsiveness */
+@media (max-width: 640px) {
+  .game-board {
+    @apply gap-1 p-2;
+  }
+  
+  .cell {
+    @apply w-16 h-16 text-xl rounded-lg;
+  }
+}
+
+/* Dark mode improvements */
+@media (prefers-color-scheme: dark) {
+  .cell {
+    @apply shadow-lg;
+  }
+  
+  .winning-cell {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+  }
 }
